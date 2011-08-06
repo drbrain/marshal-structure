@@ -14,13 +14,13 @@ Dumps a tree based on the Marshal format.  Supports the Marshal 4.8 format.
 
 From the command line:
 
-  ruby -rpp -rmarshal-structure \
+  ruby -rpp -rmarshal/structure \
     -e 'pp Marshal::Structure.load Marshal.dump "hello"'
 
 Fancier usage:
 
   require 'pp'
-  require 'marshal-structure'
+  require 'marshal/structure'
 
   ms = Marshal::Structure.new Marshal.dump %w[hello world]
 
