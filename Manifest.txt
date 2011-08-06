@@ -1,0 +1,7 @@
+.autotest
+History.txt
+Manifest.txt
+README.rdoc
+Rakefile
+lib/marshal/structure.rb
+test/test_marshal_structure.rb
