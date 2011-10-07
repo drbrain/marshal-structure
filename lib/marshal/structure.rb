@@ -9,7 +9,7 @@ class Marshal::Structure
   ##
   # Version of Marshal::Structure you are using
 
-  VERSION = '1.1'
+  VERSION = '1.1.1'
 
   ##
   # Supported major Marshal version
