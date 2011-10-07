@@ -9,7 +9,7 @@ class Marshal::Structure
   ##
   # Version of Marshal::Structure you are using
 
-  VERSION = '1.0'
+  VERSION = '1.1'
 
   ##
   # Supported major Marshal version
@@ -196,6 +196,24 @@ class Marshal::Structure
     end
 
     new(data).construct
+  end
+
+  ##
+  # Dumps the structure of each item in +argv+.  If +argv+ is empty standard
+  # input is dumped.
+
+  def self.run argv = ARGV
+    require 'pp'
+
+    if argv.empty? then
+      pp load $stdin
+    else
+      argv.each do |file|
+        open file, 'rb' do |io|
+          pp load io
+        end
+      end
+    end
   end
 
   ##

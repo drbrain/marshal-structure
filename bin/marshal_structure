@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require 'marshal/structure'
+
+Marshal::Structure.run ARGV
+
