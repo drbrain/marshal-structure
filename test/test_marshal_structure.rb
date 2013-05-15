@@ -157,6 +157,10 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
     ms = @MS.new "\x04\x08\x06M"
 
     assert_equal [6, 77], ms.consume_bytes(2)
+
+    assert_raises Marshal::Structure::EndOfMarshal do
+      ms.consume_bytes 1
+    end
   end
 
   def test_consume_byte
@@ -173,6 +177,10 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
     ms = @MS.new "\x04\x08M"
 
     assert_equal 'M', ms.consume_character
+
+    assert_raises Marshal::Structure::EndOfMarshal do
+      ms.consume_character
+    end
   end
 
   def test_tokens_array

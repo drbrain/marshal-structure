@@ -609,7 +609,7 @@ class Marshal::Structure
   # Consumes +bytes+ from the marshal stream
 
   def consume bytes
-    raise ArgumentError, "marshal data too short" if @consumed > @stream.size
+    raise EndOfMarshal if @consumed + bytes > @stream.size
     data = @stream[@consumed, bytes]
     @consumed += bytes
     data
