@@ -158,9 +158,12 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
 
     assert_equal [6, 77], ms.consume_bytes(2)
 
-    assert_raises Marshal::Structure::EndOfMarshal do
-      ms.consume_bytes 1
+    e = assert_raises Marshal::Structure::EndOfMarshal do
+      ms.consume_bytes 3
     end
+
+    assert_equal 4, e.consumed
+    assert_equal 3, e.requested
   end
 
   def test_consume_byte
@@ -168,9 +171,12 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
 
     assert_equal 77, ms.consume_byte
 
-    assert_raises Marshal::Structure::EndOfMarshal do
+    e = assert_raises Marshal::Structure::EndOfMarshal do
       ms.consume_byte
     end
+
+    assert_equal 3, e.consumed
+    assert_equal 1, e.requested
   end
 
   def test_consume_character
@@ -178,9 +184,12 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
 
     assert_equal 'M', ms.consume_character
 
-    assert_raises Marshal::Structure::EndOfMarshal do
+    e = assert_raises Marshal::Structure::EndOfMarshal do
       ms.consume_character
     end
+
+    assert_equal 3, e.consumed
+    assert_equal 1, e.requested
   end
 
   def test_tokens_array

@@ -16,6 +16,28 @@ class Marshal::Structure
   # Raised when the Marshal stream is at the end
 
   class EndOfMarshal < Error
+
+    ##
+    # Number of bytes of Marshal stream consumed
+    
+    attr_reader :consumed
+
+    ##
+    # Requested number of bytes that was not fulfillable
+
+    attr_reader :requested
+
+    ##
+    # Creates a new EndOfMarshal exception.  Marshal::Structure previously
+    # read +consumed+ bytes and was unable to fulfill the request for
+    # +requested+ additional bytes.
+
+    def initialize consumed, requested
+      @consumed = consumed
+      @requested = requested
+
+      super "consumed #{consumed} bytes, requested #{requested} more"
+    end
   end
 
   ##
@@ -609,7 +631,9 @@ class Marshal::Structure
   # Consumes +bytes+ from the marshal stream
 
   def consume bytes
-    raise EndOfMarshal if @consumed + bytes > @stream.size
+    raise EndOfMarshal.new(@consumed, bytes) if
+      @consumed + bytes > @stream.size
+
     data = @stream[@consumed, bytes]
     @consumed += bytes
     data
@@ -626,7 +650,7 @@ class Marshal::Structure
   # Consumes one byte from the marshal stream
 
   def consume_byte
-    raise EndOfMarshal if @consumed >= @byte_array.size
+    raise EndOfMarshal.new(@consumed, 1) if @consumed >= @byte_array.size
 
     data = @byte_array[@consumed]
     @consumed += 1
