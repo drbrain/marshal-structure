@@ -175,32 +175,32 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
     assert_equal 'M', ms.consume_character
   end
 
-  def test_stream_array
+  def test_tokens_array
     ms = @MS.new "\x04\x08[\x07TF"
 
-    assert_equal [:array, 2, :true, :false], ms.stream.to_a
+    assert_equal [:array, 2, :true, :false], ms.tokens.to_a
   end
 
-  def test_stream_bignum
+  def test_tokens_bignum
     ms = @MS.new "\x04\x08l-\x07\x00\x00\x00@"
 
-    assert_equal [:bignum, -1073741824], ms.stream.to_a
+    assert_equal [:bignum, -1073741824], ms.tokens.to_a
   end
 
-  def test_stream_class
+  def test_tokens_class
     ms = @MS.new "\x04\x08c\x06C"
 
-    assert_equal [:class, 'C'], ms.stream.to_a
+    assert_equal [:class, 'C'], ms.tokens.to_a
   end
 
-  def test_stream_data
+  def test_tokens_data
     ms = @MS.new "\x04\bd:\x18OpenSSL::X509::Name[\x00"
 
     assert_equal [:data, :symbol, 'OpenSSL::X509::Name', :array, 0],
-                 ms.stream.to_a
+                 ms.tokens.to_a
   end
 
-  def test_stream_extended
+  def test_tokens_extended
     skip 'todo'
     ms = @MS.new "\x04\be:\x0FEnumerableo:\vObject\x00"
 
@@ -209,41 +209,41 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
       :object, :symbol, 'Object', 0
     ]
 
-    assert_equal expected, ms.stream.to_a
+    assert_equal expected, ms.tokens.to_a
   end
 
-  def test_stream_false
+  def test_tokens_false
     ms = @MS.new "\x04\x080"
 
-    assert_equal [:nil], ms.stream.to_a
+    assert_equal [:nil], ms.tokens.to_a
   end
 
-  def test_stream_fixnum
+  def test_tokens_fixnum
     ms = @MS.new "\x04\x08i/"
 
-    assert_equal [:fixnum, 42], ms.stream.to_a
+    assert_equal [:fixnum, 42], ms.tokens.to_a
   end
 
-  def test_stream_float
+  def test_tokens_float
     ms = @MS.new "\x04\bf\b4.2"
 
-    assert_equal [:float, '4.2'], ms.stream.to_a
+    assert_equal [:float, '4.2'], ms.tokens.to_a
   end
 
-  def test_stream_hash
+  def test_tokens_hash
     ms = @MS.new "\x04\b{\ai\x06i\aTF"
 
     assert_equal [:hash, 2, :fixnum, 1, :fixnum, 2, :true, :false],
-                 ms.stream.to_a
+                 ms.tokens.to_a
   end
 
-  def test_stream_hash_default
+  def test_tokens_hash_default
     ms = @MS.new "\x04\x08}\x00i\x06"
 
-    assert_equal [:hash_default, 0, :fixnum, 1], ms.stream.to_a
+    assert_equal [:hash_default, 0, :fixnum, 1], ms.tokens.to_a
   end
 
-  def test_stream_instance_variables
+  def test_tokens_instance_variables
     ms = @MS.new "\x04\bI\"\x00\a:\x06ET:\a@xi\a"
 
     expected = [
@@ -252,10 +252,10 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
       2, :symbol, 'E', :true, :symbol, '@x', :fixnum, 2,
     ]
 
-    assert_equal expected, ms.stream.to_a
+    assert_equal expected, ms.tokens.to_a
   end
 
-  def test_stream_link
+  def test_tokens_link
     ms = @MS.new "\x04\x08[\x07I\"\x00\x06:\x06ET@\x06"
 
     expected = [
@@ -267,28 +267,28 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
         :link, 1,
     ]
 
-    assert_equal expected, ms.stream.to_a
+    assert_equal expected, ms.tokens.to_a
   end
 
-  def test_stream_module
+  def test_tokens_module
     ms = @MS.new "\x04\bm\x0FEnumerable"
 
-    assert_equal [:module, 'Enumerable'], ms.stream.to_a
+    assert_equal [:module, 'Enumerable'], ms.tokens.to_a
   end
 
-  def test_stream_module_old
+  def test_tokens_module_old
     ms = @MS.new "\x04\bM\x0FEnumerable"
 
-    assert_equal [:module_old, 'Enumerable'], ms.stream.to_a
+    assert_equal [:module_old, 'Enumerable'], ms.tokens.to_a
   end
 
-  def test_stream_object
+  def test_tokens_object
     ms = @MS.new "\x04\bo:\vObject\x00"
 
-    assert_equal [:object, :symbol, 'Object', 0], ms.stream.to_a
+    assert_equal [:object, :symbol, 'Object', 0], ms.tokens.to_a
   end
 
-  def test_stream_regexp
+  def test_tokens_regexp
     ms = @MS.new "\x04\bI/\x06x\x01\x06:\x06EF"
 
     expected = [
@@ -297,52 +297,52 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
         1, :symbol, 'E', :false,
     ]
 
-    assert_equal expected, ms.stream.to_a
+    assert_equal expected, ms.tokens.to_a
   end
 
-  def test_stream_string
+  def test_tokens_string
     ms = @MS.new "\x04\b\"\x06x"
 
-    assert_equal [:string, 'x'], ms.stream.to_a
+    assert_equal [:string, 'x'], ms.tokens.to_a
   end
 
-  def test_stream_struct
+  def test_tokens_struct
     ms = @MS.new "\x04\x08S:\x06S\x06:\x06ai\x08"
 
     expected = [
       :struct, :symbol, 'S', 1, :symbol, 'a', :fixnum, 3
     ]
 
-    assert_equal expected, ms.stream.to_a
+    assert_equal expected, ms.tokens.to_a
   end
 
-  def test_stream_symbol
+  def test_tokens_symbol
     ms = @MS.new "\x04\x08:\x06S"
 
     expected = [
       :symbol, 'S'
     ]
 
-    assert_equal expected, ms.stream.to_a
+    assert_equal expected, ms.tokens.to_a
   end
 
-  def test_stream_symbol_link
+  def test_tokens_symbol_link
     ms = @MS.new "\x04\b[\a:\x06s;\x00"
 
     expected = [
       :array, 2, :symbol, 's', :symbol_link, 0,
     ]
 
-    assert_equal expected, ms.stream.to_a
+    assert_equal expected, ms.tokens.to_a
   end
 
-  def test_stream_true
+  def test_tokens_true
     ms = @MS.new "\x04\x08T"
 
-    assert_equal [:true], ms.stream.to_a
+    assert_equal [:true], ms.tokens.to_a
   end
 
-  def test_stream_user_defined
+  def test_tokens_user_defined
     ms = @MS.new "\x04\bIu:\tTime\r\xE7Q\x1C\x80\xA8\xC3\x83\xE5\a" \
                  ":\voffseti\xFE\x90\x9D:\tzoneI\"\bPDT\x06:\x06ET"
 
@@ -360,10 +360,10 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
               1, :symbol, 'E', :true,
     ]
 
-    assert_equal expected, ms.stream.to_a
+    assert_equal expected, ms.tokens.to_a
   end
 
-  def test_stream_user_marshal
+  def test_tokens_user_marshal
     ms = @MS.new "\x04\bU:\tDate[\vi\x00i\x03l{%i\x00i\x00i\x00f\f2299161"
 
     expected = [
@@ -377,7 +377,7 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
           :float, '2299161',
     ]
 
-    assert_equal expected, ms.stream.to_a
+    assert_equal expected, ms.tokens.to_a
   end
 
   def test_get_byte_sequence

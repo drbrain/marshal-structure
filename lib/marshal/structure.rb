@@ -678,19 +678,24 @@ class Marshal::Structure
     end
   end
 
-  def stream
+  def tokens
     @state = [:start]
 
     Enumerator.new do |yielder|
       until @state.empty? do
-        item = next_item
+        token = next_token
 
-        yielder << item if item
+        yielder << token if token
       end
     end
   end
 
-  def next_item
+  ##
+  # Attempts to retrieve the next token from the stream.  You may need to call
+  # next_token twice to receive a token as the current token may be
+  # incomplete.
+
+  def next_token # :nodoc:
     case current_state = @state.pop
     when :start then
       item_type = TYPE_MAP[consume_character]
