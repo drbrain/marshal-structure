@@ -682,104 +682,26 @@ class Marshal::Structure
 
   def next_token # :nodoc:
     case current_state = @state.pop
-    when :any then
-      item_type = TYPE_MAP[consume_character]
-
-      @state.push item_type unless [:nil, :true, :false].include? item_type
-
-      item_type
-    when :array then
-      size = construct_integer
-
-      @state.push size if size > 0
-
-      size
-    when :bignum then
-      sign = consume_byte == 45 ? -1 : 1
-      size = construct_integer * 2
-
-      result = 0
-
-      data = consume_bytes size
-
-      data.each_with_index do |data, exp|
-        result += (data * 2**(exp*8))
-      end
-
-      sign * result
-    when :byte then
-      consume_byte
-    when :bytes, :class, :float, :module, :module_old, :string, :symbol then
-      get_byte_sequence
-    when :data then
-      @state.push :any
-      @state.push :sym
-
-      nil
-    when :extended then
-      @state.push :any
-      @state.push :sym
-
-      nil
-    when :fixnum, :link, :symbol_link then
-      construct_integer
-    when :hash, :pairs then
-      size = construct_integer
-
-      @state.push size * 2 if size > 0
-
-      size
-    when :hash_default then
-      size = construct_integer
-
-      @state.push :any
-      @state.push size * 2 if size > 0
-
-      size
-    when :instance_variables then
-      @state.push :pairs
-      @state.push :any
-
-      nil
-    when :object then
-      @state.push :fixnum
-      @state.push :sym
-
-      nil
-    when :regexp then
-      @state.push :byte
-
-      get_byte_sequence
-    when :struct then
-      @state.push :pairs
-      @state.push :sym
-
-      nil
-    when :sym then
-      item_type = TYPE_MAP[consume_character]
-
-      raise Error, "expected symbol type, got #{item_type.inspect}" unless
-        [:symbol, :symbol_link].include? item_type
-
-      @state.push item_type
-
-      item_type
-    when :user_defined then
-      @state.push :bytes
-      @state.push :sym
-
-      nil
-    when :user_marshal then
-      @state.push :any
-      @state.push :sym
-
-      nil
-    when Integer then
-      next_state = current_state - 1
-      @state.push next_state if current_state > 0
-      @state.push :any
-
-      nil
+    when :any                         then tokenize_any
+    when :array                       then tokenize_array
+    when :bignum                      then tokenize_bignum
+    when :byte                        then consume_byte
+    when :bytes,
+         :class, :module, :module_old,
+         :float, :string, :symbol     then get_byte_sequence
+    when :data                        then tokenize_data
+    when :extended                    then tokenize_extended
+    when :fixnum, :link, :symbol_link then construct_integer
+    when :hash, :pairs                then tokenize_pairs
+    when :hash_default                then tokenize_hash_default
+    when :instance_variables          then tokenize_instance_variables
+    when :object                      then tokenize_object
+    when :regexp                      then tokenize_regexp
+    when :struct                      then tokenize_struct
+    when :sym                         then tokenize_sym
+    when :user_defined                then tokenize_user_defined
+    when :user_marshal                then tokenize_user_marshal
+    when Integer                      then tokenize_next_any current_state
     else
       raise Error, "bug: unknown state #{current_state.inspect}"
     end
@@ -798,6 +720,9 @@ class Marshal::Structure
     end
   end
 
+  ##
+  # Returns an Enumerator that will tokenize the Marshal stream.
+
   def tokens
     @state = [:any]
 
@@ -809,6 +734,123 @@ class Marshal::Structure
       end
     end
   end
+
+  def tokenize_any # :nodoc:
+    item_type = TYPE_MAP[consume_character]
+
+    @state.push item_type unless [:nil, :true, :false].include? item_type
+
+    item_type
+  end
+
+  def tokenize_array # :nodoc:
+    size = construct_integer
+
+    @state.push size if size > 0
+
+    size
+  end
+
+  def tokenize_bignum # :nodoc:
+    sign = consume_byte == 45 ? -1 : 1
+    size = construct_integer * 2
+
+    result = 0
+
+    data = consume_bytes size
+
+    data.each_with_index do |data, exp|
+      result += (data * 2**(exp*8))
+    end
+
+    sign * result
+  end
+
+  def tokenize_data # :nodoc:
+    @state.push :any
+    @state.push :sym
+
+    nil
+  end
+
+  alias tokenize_extended tokenize_data # :nodoc:
+
+  def tokenize_hash_default # :nodoc:
+    size = construct_integer
+
+    @state.push :any
+    @state.push size * 2 if size > 0
+
+    size
+  end
+
+  def tokenize_instance_variables # :nodoc:
+    @state.push :pairs
+    @state.push :any
+
+    nil
+  end
+
+  ##
+  # For multipart objects like arrays and hashes a count of items is pushed
+  # onto the stack.  This method re-pushes an :any onto the stack until the
+  # correct number of tokens have been created from the stream.
+
+  def tokenize_next_any current_state # :nodoc:
+    next_state = current_state - 1
+    @state.push next_state if current_state > 0
+    @state.push :any
+
+    nil
+  end
+
+  def tokenize_object # :nodoc:
+    @state.push :fixnum
+    @state.push :sym
+
+    nil
+  end
+
+  def tokenize_pairs # :nodoc:
+    size = construct_integer
+
+    @state.push size * 2 if size > 0
+
+    size
+  end
+
+  def tokenize_regexp # :nodoc:
+    @state.push :byte
+
+    get_byte_sequence
+  end
+
+  def tokenize_struct # :nodoc:
+    @state.push :pairs
+    @state.push :sym
+
+    nil
+  end
+
+  def tokenize_sym # :nodoc:
+    item_type = TYPE_MAP[consume_character]
+
+    raise Error, "expected symbol type, got #{item_type.inspect}" unless
+      [:symbol, :symbol_link].include? item_type
+
+    @state.push item_type
+
+    item_type
+  end
+
+  def tokenize_user_defined # :nodoc:
+    @state.push :bytes
+    @state.push :sym
+
+    nil
+  end
+
+  alias tokenize_user_marshal tokenize_data # :nodoc:
 
 end
 
