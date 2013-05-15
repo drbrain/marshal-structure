@@ -227,6 +227,12 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
     assert_equal       -1, @MS.new("\x04\x08\xff\xff").construct_integer
   end
 
+  def test_get_byte_sequence
+    ms = @MS.new "\x04\x08\x06M"
+
+    assert_equal "M", ms.get_byte_sequence
+  end
+
   def test_tokens_array
     ms = @MS.new "\x04\x08[\x07TF"
 
@@ -430,12 +436,6 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
     ]
 
     assert_equal expected, ms.tokens.to_a
-  end
-
-  def test_get_byte_sequence
-    ms = @MS.new "\x04\x08\x06M"
-
-    assert_equal "M", ms.get_byte_sequence
   end
 
 end
