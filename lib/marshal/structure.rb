@@ -161,6 +161,36 @@ class Marshal::Structure
 
   TYPE_LINK = '@'
 
+  TYPE_MAP = Hash.new do |_, type| # :nodoc:
+    raise Error, "unknown type #{type.inspect}"
+  end
+
+  TYPE_MAP[TYPE_ARRAY]      = :array
+  TYPE_MAP[TYPE_BIGNUM]     = :bignum
+  TYPE_MAP[TYPE_CLASS]      = :class
+  TYPE_MAP[TYPE_DATA]       = :data
+  TYPE_MAP[TYPE_EXTENDED]   = :extended
+  TYPE_MAP[TYPE_FALSE]      = :false
+  TYPE_MAP[TYPE_FIXNUM]     = :fixnum
+  TYPE_MAP[TYPE_FLOAT]      = :float
+  TYPE_MAP[TYPE_HASH]       = :hash
+  TYPE_MAP[TYPE_HASH_DEF]   = :hash_default
+  TYPE_MAP[TYPE_IVAR]       = :instance_variables
+  TYPE_MAP[TYPE_LINK]       = :link
+  TYPE_MAP[TYPE_MODULE]     = :module
+  TYPE_MAP[TYPE_MODULE_OLD] = :module_old
+  TYPE_MAP[TYPE_NIL]        = :nil
+  TYPE_MAP[TYPE_OBJECT]     = :object
+  TYPE_MAP[TYPE_REGEXP]     = :regexp
+  TYPE_MAP[TYPE_STRING]     = :string
+  TYPE_MAP[TYPE_STRUCT]     = :struct
+  TYPE_MAP[TYPE_SYMBOL]     = :symbol
+  TYPE_MAP[TYPE_SYMLINK]    = :symbol_link
+  TYPE_MAP[TYPE_TRUE]       = :true
+  TYPE_MAP[TYPE_UCLASS]     = :user_class
+  TYPE_MAP[TYPE_USERDEF]    = :user_defined
+  TYPE_MAP[TYPE_USRMARSHAL] = :user_marshal
+
   ##
   # Objects found in the Marshal stream.  Since objects aren't constructed the
   # actual object won't be present in this list.
@@ -235,9 +265,11 @@ class Marshal::Structure
     @objects = []
     @symbols = []
 
-    @stream = stream
     @byte_array = stream.bytes.to_a
-    @consumed = 2
+    @consumed   = 2
+    @state      = []
+    @stream     = stream
+    @stream.force_encoding Encoding::BINARY
   end
 
   ##
@@ -500,7 +532,7 @@ class Marshal::Structure
   # Creates a Regexp
 
   def construct_regexp
-    ref =store_unique_object Object.allocate
+    ref = store_unique_object Object.allocate
 
     [ref, get_byte_sequence, consume_byte]
   end
@@ -644,6 +676,125 @@ class Marshal::Structure
     else
       add_object obj
     end
+  end
+
+  def stream
+    @state = [:start]
+
+    Enumerator.new do |yielder|
+      until @state.empty? do
+        item = next_item
+
+        yielder << item if item
+      end
+    end
+  end
+
+  def next_item
+    case current_state = @state.pop
+    when :start then
+      item_type = TYPE_MAP[consume_character]
+
+      @state.push item_type unless [:nil, :true, :false].include? item_type
+
+      item_type
+    when :array then
+      size = construct_integer
+
+      @state.push size if size > 0
+
+      size
+    when :bignum then
+      sign = consume_byte == 45 ? -1 : 1
+      size = construct_integer * 2
+
+      result = 0
+
+      data = consume_bytes size
+
+      data.each_with_index do |data, exp|
+        result += (data * 2**(exp*8))
+      end
+
+      sign * result
+    when :byte then
+      consume_byte
+    when :bytes, :class, :float, :module, :module_old, :string, :symbol then
+      get_byte_sequence
+    when :data then
+      @state.push :start
+      @state.push :sym
+
+      nil
+    when :extended then
+      @state.push :start
+      @state.push :sym
+
+      nil
+    when :fixnum, :link, :symbol_link then
+      construct_integer
+    when :hash, :pairs then
+      size = construct_integer
+
+      @state.push size * 2 if size > 0
+
+      size
+    when :hash_default then
+      size = construct_integer
+
+      @state.push :start
+      @state.push size * 2 if size > 0
+
+      size
+    when :instance_variables then
+      @state.push :pairs
+      @state.push :start
+
+      nil
+    when :object then
+      @state.push :fixnum
+      @state.push :sym
+
+      nil
+    when :regexp then
+      @state.push :byte
+
+      get_byte_sequence
+    when :struct then
+      @state.push :pairs
+      @state.push :sym
+
+      nil
+    when :sym then
+      item_type = TYPE_MAP[consume_character]
+
+      raise Error, "expected symbol type, got #{item_type.inspect}" unless
+        [:symbol, :symbol_link].include? item_type
+
+      @state.push item_type
+
+      item_type
+    when :user_defined then
+      @state.push :bytes
+      @state.push :sym
+
+      nil
+    when :user_marshal then
+      @state.push :start
+      @state.push :sym
+
+      nil
+    when Integer then
+      next_state = current_state - 1
+      @state.push next_state if current_state > 0
+      @state.push :start
+
+      nil
+    else
+      raise Error, "bug: unknown state #{current_state.inspect}"
+    end
+  rescue EndOfMarshal
+    nil
   end
 
 end

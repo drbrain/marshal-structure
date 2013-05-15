@@ -175,6 +175,211 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
     assert_equal 'M', ms.consume_character
   end
 
+  def test_stream_array
+    ms = @MS.new "\x04\x08[\x07TF"
+
+    assert_equal [:array, 2, :true, :false], ms.stream.to_a
+  end
+
+  def test_stream_bignum
+    ms = @MS.new "\x04\x08l-\x07\x00\x00\x00@"
+
+    assert_equal [:bignum, -1073741824], ms.stream.to_a
+  end
+
+  def test_stream_class
+    ms = @MS.new "\x04\x08c\x06C"
+
+    assert_equal [:class, 'C'], ms.stream.to_a
+  end
+
+  def test_stream_data
+    ms = @MS.new "\x04\bd:\x18OpenSSL::X509::Name[\x00"
+
+    assert_equal [:data, :symbol, 'OpenSSL::X509::Name', :array, 0],
+                 ms.stream.to_a
+  end
+
+  def test_stream_extended
+    skip 'todo'
+    ms = @MS.new "\x04\be:\x0FEnumerableo:\vObject\x00"
+
+    expected = [
+      :extended, :symbol, 'Enumerable',
+      :object, :symbol, 'Object', 0
+    ]
+
+    assert_equal expected, ms.stream.to_a
+  end
+
+  def test_stream_false
+    ms = @MS.new "\x04\x080"
+
+    assert_equal [:nil], ms.stream.to_a
+  end
+
+  def test_stream_fixnum
+    ms = @MS.new "\x04\x08i/"
+
+    assert_equal [:fixnum, 42], ms.stream.to_a
+  end
+
+  def test_stream_float
+    ms = @MS.new "\x04\bf\b4.2"
+
+    assert_equal [:float, '4.2'], ms.stream.to_a
+  end
+
+  def test_stream_hash
+    ms = @MS.new "\x04\b{\ai\x06i\aTF"
+
+    assert_equal [:hash, 2, :fixnum, 1, :fixnum, 2, :true, :false],
+                 ms.stream.to_a
+  end
+
+  def test_stream_hash_default
+    ms = @MS.new "\x04\x08}\x00i\x06"
+
+    assert_equal [:hash_default, 0, :fixnum, 1], ms.stream.to_a
+  end
+
+  def test_stream_instance_variables
+    ms = @MS.new "\x04\bI\"\x00\a:\x06ET:\a@xi\a"
+
+    expected = [
+      :instance_variables,
+      :string, '',
+      2, :symbol, 'E', :true, :symbol, '@x', :fixnum, 2,
+    ]
+
+    assert_equal expected, ms.stream.to_a
+  end
+
+  def test_stream_link
+    ms = @MS.new "\x04\x08[\x07I\"\x00\x06:\x06ET@\x06"
+
+    expected = [
+      :array, 2,
+        :instance_variables,
+          :string, '',
+          1,
+          :symbol, 'E', :true,
+        :link, 1,
+    ]
+
+    assert_equal expected, ms.stream.to_a
+  end
+
+  def test_stream_module
+    ms = @MS.new "\x04\bm\x0FEnumerable"
+
+    assert_equal [:module, 'Enumerable'], ms.stream.to_a
+  end
+
+  def test_stream_module_old
+    ms = @MS.new "\x04\bM\x0FEnumerable"
+
+    assert_equal [:module_old, 'Enumerable'], ms.stream.to_a
+  end
+
+  def test_stream_object
+    ms = @MS.new "\x04\bo:\vObject\x00"
+
+    assert_equal [:object, :symbol, 'Object', 0], ms.stream.to_a
+  end
+
+  def test_stream_regexp
+    ms = @MS.new "\x04\bI/\x06x\x01\x06:\x06EF"
+
+    expected = [
+      :instance_variables,
+          :regexp, 'x', 1,
+        1, :symbol, 'E', :false,
+    ]
+
+    assert_equal expected, ms.stream.to_a
+  end
+
+  def test_stream_string
+    ms = @MS.new "\x04\b\"\x06x"
+
+    assert_equal [:string, 'x'], ms.stream.to_a
+  end
+
+  def test_stream_struct
+    ms = @MS.new "\x04\x08S:\x06S\x06:\x06ai\x08"
+
+    expected = [
+      :struct, :symbol, 'S', 1, :symbol, 'a', :fixnum, 3
+    ]
+
+    assert_equal expected, ms.stream.to_a
+  end
+
+  def test_stream_symbol
+    ms = @MS.new "\x04\x08:\x06S"
+
+    expected = [
+      :symbol, 'S'
+    ]
+
+    assert_equal expected, ms.stream.to_a
+  end
+
+  def test_stream_symbol_link
+    ms = @MS.new "\x04\b[\a:\x06s;\x00"
+
+    expected = [
+      :array, 2, :symbol, 's', :symbol_link, 0,
+    ]
+
+    assert_equal expected, ms.stream.to_a
+  end
+
+  def test_stream_true
+    ms = @MS.new "\x04\x08T"
+
+    assert_equal [:true], ms.stream.to_a
+  end
+
+  def test_stream_user_defined
+    ms = @MS.new "\x04\bIu:\tTime\r\xE7Q\x1C\x80\xA8\xC3\x83\xE5\a" \
+                 ":\voffseti\xFE\x90\x9D:\tzoneI\"\bPDT\x06:\x06ET"
+
+    timeval = "\xE7Q\x1C\x80\xA8\xC3\x83\xE5"
+    timeval.force_encoding Encoding::BINARY
+
+    expected = [
+      :instance_variables,
+          :user_defined, :symbol, 'Time', timeval,
+        2,
+          :symbol, 'offset', :fixnum, -25200,
+          :symbol, 'zone',
+            :instance_variables,
+                :string, 'PDT',
+              1, :symbol, 'E', :true,
+    ]
+
+    assert_equal expected, ms.stream.to_a
+  end
+
+  def test_stream_user_marshal
+    ms = @MS.new "\x04\bU:\tDate[\vi\x00i\x03l{%i\x00i\x00i\x00f\f2299161"
+
+    expected = [
+      :user_marshal, :symbol, 'Date',
+        :array, 6,
+          :fixnum, 0,
+          :fixnum, 2456428,
+          :fixnum, 0,
+          :fixnum, 0,
+          :fixnum, 0,
+          :float, '2299161',
+    ]
+
+    assert_equal expected, ms.stream.to_a
+  end
+
   def test_get_byte_sequence
     ms = @MS.new "\x04\x08\x06M"
 
