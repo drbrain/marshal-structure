@@ -679,7 +679,7 @@ class Marshal::Structure
   end
 
   def tokens
-    @state = [:start]
+    @state = [:any]
 
     Enumerator.new do |yielder|
       until @state.empty? do
@@ -697,7 +697,7 @@ class Marshal::Structure
 
   def next_token # :nodoc:
     case current_state = @state.pop
-    when :start then
+    when :any then
       item_type = TYPE_MAP[consume_character]
 
       @state.push item_type unless [:nil, :true, :false].include? item_type
@@ -727,12 +727,12 @@ class Marshal::Structure
     when :bytes, :class, :float, :module, :module_old, :string, :symbol then
       get_byte_sequence
     when :data then
-      @state.push :start
+      @state.push :any
       @state.push :sym
 
       nil
     when :extended then
-      @state.push :start
+      @state.push :any
       @state.push :sym
 
       nil
@@ -747,13 +747,13 @@ class Marshal::Structure
     when :hash_default then
       size = construct_integer
 
-      @state.push :start
+      @state.push :any
       @state.push size * 2 if size > 0
 
       size
     when :instance_variables then
       @state.push :pairs
-      @state.push :start
+      @state.push :any
 
       nil
     when :object then
@@ -785,14 +785,14 @@ class Marshal::Structure
 
       nil
     when :user_marshal then
-      @state.push :start
+      @state.push :any
       @state.push :sym
 
       nil
     when Integer then
       next_state = current_state - 1
       @state.push next_state if current_state > 0
-      @state.push :start
+      @state.push :any
 
       nil
     else
