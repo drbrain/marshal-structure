@@ -5,6 +5,7 @@ require 'hoe'
 
 Hoe.plugin :git
 Hoe.plugin :minitest
+Hoe.plugin :travis
 
 Hoe.spec 'marshal-structure' do
   developer 'Eric Hodel', 'drbrain@segment7.net'
