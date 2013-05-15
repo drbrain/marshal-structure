@@ -676,29 +676,6 @@ class Marshal::Structure
   end
 
   ##
-  # Stores a reference to +obj+
-
-  def store_unique_object obj
-    if Symbol === obj then
-      add_symlink obj
-    else
-      add_object obj
-    end
-  end
-
-  def tokens
-    @state = [:any]
-
-    Enumerator.new do |yielder|
-      until @state.empty? do
-        token = next_token
-
-        yielder << token if token
-      end
-    end
-  end
-
-  ##
   # Attempts to retrieve the next token from the stream.  You may need to call
   # next_token twice to receive a token as the current token may be
   # incomplete.
@@ -808,6 +785,29 @@ class Marshal::Structure
     end
   rescue EndOfMarshal
     nil
+  end
+
+  ##
+  # Stores a reference to +obj+
+
+  def store_unique_object obj
+    if Symbol === obj then
+      add_symlink obj
+    else
+      add_object obj
+    end
+  end
+
+  def tokens
+    @state = [:any]
+
+    Enumerator.new do |yielder|
+      until @state.empty? do
+        token = next_token
+
+        yielder << token if token
+      end
+    end
   end
 
 end
