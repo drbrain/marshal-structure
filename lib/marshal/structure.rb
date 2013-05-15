@@ -495,49 +495,33 @@ class Marshal::Structure
   def construct_integer
     c = consume_byte
 
-    # The format appears to be a simple integer compression format
-    #
-    # The 0-123 cases are easy, and use one byte
-    # We've read c as unsigned char in a way, but we need to honor
-    # the sign bit. We do that by simply comparing with the +128 values
     return 0 if c == 0
-    return c - 5 if 4 < c and c < 128
 
-    # negative, but checked known it's instead in 2's compliment
-    return c - 251 if 252 > c and c > 127
+    # convert to signed integer
+    c = (c ^ 0x80) - 0x80
 
-    # otherwise c (now in the 1 to 4 range) indicates how many
-    # bytes to read to construct the value.
-    #
-    # Because we're operating on a small number of possible values,
-    # it's cleaner to just unroll the calculate of each
+    if c > 0 then
+      return c - 5 if 4 < c
 
-    case c
-    when 1
-      consume_byte
-    when 2
-      consume_byte | (consume_byte << 8)
-    when 3
-      consume_byte | (consume_byte << 8) | (consume_byte << 16)
-    when 4
-      consume_byte | (consume_byte << 8) | (consume_byte << 16) |
-                     (consume_byte << 24)
+      x = 0
 
-    when 255 # -1
-      consume_byte - 256
-    when 254 # -2
-      (consume_byte | (consume_byte << 8)) - 65536
-    when 253 # -3
-      (consume_byte |
-       (consume_byte << 8) |
-       (consume_byte << 16)) - 16777216 # 2 ** 24
-    when 252 # -4
-      (consume_byte |
-       (consume_byte << 8) |
-       (consume_byte << 16) |
-       (consume_byte << 24)) - 4294967296
+      c.times do |i|
+        x |= consume_byte << (8 * i)
+      end
+      
+      x
     else
-      raise "Invalid integer size: #{c}"
+      return c + 5 if c < -4
+
+      x = -1
+
+      (-c).times do |i|
+        factor = 8 * i
+        x &= ~(0xff << factor)
+        x |= consume_byte << factor
+      end
+
+      x
     end
   end
 
