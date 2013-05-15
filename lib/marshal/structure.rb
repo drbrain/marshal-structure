@@ -7,6 +7,18 @@
 class Marshal::Structure
 
   ##
+  # Generic error class for Marshal::Structure
+
+  class Error < RuntimeError
+  end
+
+  ##
+  # Raised when the Marshal stream is at the end
+
+  class EndOfMarshal < Error
+  end
+
+  ##
   # Version of Marshal::Structure you are using
 
   VERSION = '1.1.1'
@@ -314,6 +326,8 @@ class Marshal::Structure
     else
       raise ArgumentError, "load error, unknown type #{type}"
     end
+  rescue EndOfMarshal
+    raise ArgumentError, 'marshal data too short'
   end
 
   ##
@@ -580,8 +594,7 @@ class Marshal::Structure
   # Consumes one byte from the marshal stream
 
   def consume_byte
-    raise ArgumentError, "marshal data too short" if
-      @consumed > @byte_array.size
+    raise EndOfMarshal if @consumed >= @byte_array.size
 
     data = @byte_array[@consumed]
     @consumed += 1

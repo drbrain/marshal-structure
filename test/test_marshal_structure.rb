@@ -110,6 +110,16 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
     assert_equal expected, structure
   end
 
+  def test_construct_too_short
+    str = "\x04\x08{"
+
+    e = assert_raises ArgumentError do
+      @MS.load str
+    end
+
+    assert_equal 'marshal data too short', e.message
+  end
+
   def test_construct_data
     name = OpenSSL::X509::Name.parse 'CN=nobody/DC=example'
     str = Marshal.dump name
@@ -153,6 +163,10 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
     ms = @MS.new "\x04\x08M"
 
     assert_equal 77, ms.consume_byte
+
+    assert_raises Marshal::Structure::EndOfMarshal do
+      ms.consume_byte
+    end
   end
 
   def test_consume_character
