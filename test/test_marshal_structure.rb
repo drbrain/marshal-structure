@@ -394,6 +394,12 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
     assert_equal expected, ms.tokens.to_a
   end
 
+  def test_tokens_too_short
+    ms = @MS.new "\x04\x08"
+
+    assert_empty ms.tokens.to_a, "tokenizer don't care"
+  end
+
   def test_tokens_true
     ms = @MS.new "\x04\x08T"
 
