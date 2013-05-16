@@ -84,9 +84,7 @@ class Marshal::Structure
       data = obj.to_s
     elsif obj.respond_to? :read then
       data = obj.read
-      if data.empty? then
-        raise EOFError, "end of file reached"
-      end
+      raise EOFError, "end of file reached" if data.empty?
     elsif obj.respond_to? :getc then # FIXME - don't read all of it upfront
       data = ''
 
