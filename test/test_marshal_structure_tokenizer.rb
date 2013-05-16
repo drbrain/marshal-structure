@@ -1,18 +1,6 @@
-require 'minitest/autorun'
-require 'marshal/structure'
-require 'pp'
+require 'marshal/structure/test_case'
 
-class TestMarshalStructureTokenizer < MiniTest::Unit::TestCase
-
-  def mu_pp obj
-    s = ''
-    s = PP.pp obj, s
-    s.chomp
-  end
-
-  def setup
-    @MST = Marshal::Structure::Tokenizer
-  end
+class TestMarshalStructureTokenizer < Marshal::Structure::TestCase
 
   def test_bytes
     ms = @MST.new "\x04\x08\x06M"

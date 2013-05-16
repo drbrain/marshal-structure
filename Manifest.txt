@@ -6,6 +6,7 @@ Rakefile
 bin/marshal_structure
 lib/marshal/structure.rb
 lib/marshal/structure/parser.rb
+lib/marshal/structure/test_case.rb
 lib/marshal/structure/tokenizer.rb
 test/test_marshal_structure.rb
 test/test_marshal_structure_parser.rb

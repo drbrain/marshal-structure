@@ -1,17 +1,6 @@
-require 'minitest/autorun'
-require 'marshal/structure'
+require 'marshal/structure/test_case'
 
-class TestMarshalStructure < MiniTest::Unit::TestCase
-
-  def mu_pp obj
-    s = ''
-    s = PP.pp obj, s
-    s.chomp
-  end
-
-  def setup
-    @MS = Marshal::Structure
-  end
+class TestMarshalStructure < Marshal::Structure::TestCase
 
   def test_class_load
     ary = %W[\x04 \x08 T]
