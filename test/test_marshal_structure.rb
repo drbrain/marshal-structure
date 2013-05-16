@@ -55,6 +55,17 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
     @MS = Marshal::Structure
   end
 
+  def test_class_load
+    ary = %W[\x04 \x08 T]
+    def ary.getc
+      shift
+    end
+
+    result = @MS.load ary
+
+    assert_equal :true, result
+  end
+
   def test_construct
     str =
       "\004\b{\006:\006a[\031c\006Bm\006C\"\006d/\006e\000i\006" \

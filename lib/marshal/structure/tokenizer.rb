@@ -319,10 +319,10 @@ class Marshal::Structure::Tokenizer
 
     result = 0
 
-    data = consume_bytes size
+    bytes = consume_bytes size
 
-    data.each_with_index do |data, exp|
-      result += (data * 2**(exp*8))
+    bytes.each_with_index do |byte, exp|
+      result += (byte * 2**(exp*8))
     end
 
     sign * result

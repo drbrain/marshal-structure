@@ -89,7 +89,10 @@ class Marshal::Structure
       end
     elsif obj.respond_to? :getc then # FIXME - don't read all of it upfront
       data = ''
-      data << c while (c = obj.getc.chr)
+
+      while c = obj.getc do
+        data << c.chr
+      end
     else
       raise TypeError, "instance of IO needed"
     end
@@ -339,9 +342,6 @@ class Marshal::Structure
   # Creates a Struct
 
   def construct_struct
-    symbols = []
-    values = []
-
     obj_ref = store_unique_object Object.allocate
 
     obj = [obj_ref, get_symbol]

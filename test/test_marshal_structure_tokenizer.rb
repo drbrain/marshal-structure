@@ -66,8 +66,10 @@ class TestMarshalStructureTokenizer < MiniTest::Unit::TestCase
     assert_equal        1, @MST.new("\x04\x08\x01\x01").construct_integer
     assert_equal        0, @MST.new("\x04\x08\x02\x00\x00").construct_integer
     assert_equal     2<<7, @MST.new("\x04\x08\x02\x00\x01").construct_integer
-    assert_equal        0, @MST.new("\x04\x08\x03\x00\x00\x00").construct_integer
-    assert_equal    2<<15, @MST.new("\x04\x08\x03\x00\x00\x01").construct_integer
+    assert_equal        0,
+                 @MST.new("\x04\x08\x03\x00\x00\x00").construct_integer
+    assert_equal    2<<15,
+                 @MST.new("\x04\x08\x03\x00\x00\x01").construct_integer
     assert_equal        0,
                  @MST.new("\x04\x08\x04\x00\x00\x00\x00").construct_integer
     assert_equal    2<<23,
@@ -78,20 +80,22 @@ class TestMarshalStructureTokenizer < MiniTest::Unit::TestCase
     assert_equal        0, @MST.new("\x04\x08\x05").construct_integer
     assert_equal        1, @MST.new("\x04\x08\x06").construct_integer
     assert_equal      122, @MST.new("\x04\x08\x7f").construct_integer
-    assert_equal     -123, @MST.new("\x04\x08\x80").construct_integer
-    assert_equal       -1, @MST.new("\x04\x08\xfa").construct_integer
+    assert_equal(    -123, @MST.new("\x04\x08\x80").construct_integer)
+    assert_equal(      -1, @MST.new("\x04\x08\xfa").construct_integer)
     assert_equal        0, @MST.new("\x04\x08\xfb").construct_integer
 
-    assert_equal -(1<<32),
-                 @MST.new("\x04\x08\xfc\x00\x00\x00\x00").construct_integer
-    assert_equal       -1,
-                 @MST.new("\x04\x08\xfc\xff\xff\xff\xff").construct_integer
-    assert_equal -(1<<24), @MST.new("\x04\x08\xfd\x00\x00\x00").construct_integer
-    assert_equal       -1, @MST.new("\x04\x08\xfd\xff\xff\xff").construct_integer
-    assert_equal -(1<<16), @MST.new("\x04\x08\xfe\x00\x00").construct_integer
-    assert_equal       -1, @MST.new("\x04\x08\xfe\xff\xff").construct_integer
-    assert_equal  -(1<<8), @MST.new("\x04\x08\xff\x00").construct_integer
-    assert_equal       -1, @MST.new("\x04\x08\xff\xff").construct_integer
+    assert_equal(-(1<<32),
+                 @MST.new("\x04\x08\xfc\x00\x00\x00\x00").construct_integer)
+    assert_equal(      -1,
+                 @MST.new("\x04\x08\xfc\xff\xff\xff\xff").construct_integer)
+    assert_equal(-(1<<24),
+                 @MST.new("\x04\x08\xfd\x00\x00\x00").construct_integer)
+    assert_equal(      -1,
+                 @MST.new("\x04\x08\xfd\xff\xff\xff").construct_integer)
+    assert_equal(-(1<<16), @MST.new("\x04\x08\xfe\x00\x00").construct_integer)
+    assert_equal(      -1, @MST.new("\x04\x08\xfe\xff\xff").construct_integer)
+    assert_equal( -(1<<8), @MST.new("\x04\x08\xff\x00").construct_integer)
+    assert_equal(      -1, @MST.new("\x04\x08\xff\xff").construct_integer)
   end
 
   def test_get_byte_sequence
