@@ -29,9 +29,8 @@ class Marshal::Structure::ObjectCounter
   def count
     token = @tokens.next
 
-    return 0 if [:nil, :true, :false].include? token
-
     case token
+    when :nil, :true, :false          then 0
     when :array                       then count_array
     when :bignum                      then count_bignum
     when :class, :module, :module_old then count_class
