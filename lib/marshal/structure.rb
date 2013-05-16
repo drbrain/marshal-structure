@@ -325,54 +325,35 @@ class Marshal::Structure
 
     obj = [token]
 
-    case token
-    when :array then
-      obj.concat construct_array
-    when :bignum then
-      obj.concat construct_bignum
-    when :class, :module then
-      obj.concat construct_class
-    when :data then
-      obj.concat construct_data
-    when :extended then
-      obj.concat construct_extended
-    when :fixnum then
-      obj << next_token
-    when :float then
-      obj.concat construct_float
-    when :hash then
-      obj.concat construct_hash
-    when :hash_default then
-      obj.concat construct_hash_def
-    when :instance_variables then
-      obj << construct
-      obj.concat construct_instance_variables
-    when :link then
-      obj << next_token
-    when :module_old then
-      obj[0] = :module
-      obj.concat construct_class
-    when :object then
-      obj.concat construct_object
-    when :regexp then
-      obj.concat construct_regexp
-    when :string then
-      obj.concat construct_string
-    when :struct then
-      obj.concat construct_struct
-    when :symbol then
-      obj.concat construct_symbol
-    when :symbol_link then
-      obj << next_token
-    when :user_class then
-      obj.concat construct_extended
-    when :user_defined then
-      obj.concat construct_user_defined
-    when :user_marshal then
-      obj.concat construct_user_marshal
-    else
-      raise Error, "bug: unknown token #{token.inspect}"
-    end
+    rest = 
+      case token
+      when :array                       then construct_array
+      when :bignum                      then construct_bignum
+      when :class, :module              then construct_class
+      when :data                        then construct_data
+      when :extended                    then construct_extended
+      when :fixnum, :link, :symbol_link then [next_token]
+      when :float                       then construct_float
+      when :hash                        then construct_hash
+      when :hash_default                then construct_hash_def
+      when :object                      then construct_object
+      when :regexp                      then construct_regexp
+      when :string                      then construct_string
+      when :struct                      then construct_struct
+      when :symbol                      then construct_symbol
+      when :user_class                  then construct_extended
+      when :user_defined                then construct_user_defined
+      when :user_marshal                then construct_user_marshal
+      when :instance_variables          then
+        [construct].concat construct_instance_variables
+      when :module_old                  then
+        obj[0] = :module
+        construct_class
+      else
+        raise Error, "bug: unknown token #{token.inspect}"
+      end
+
+    obj.concat rest
   rescue EndOfMarshal
     raise ArgumentError, 'marshal data too short'
   end
