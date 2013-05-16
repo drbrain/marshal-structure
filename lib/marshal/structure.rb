@@ -76,6 +76,11 @@ class Marshal::Structure
   attr_reader :symbols
 
   ##
+  # The Marshal stream
+
+  attr_reader :stream
+
+  ##
   # Returns the structure of the Marshaled object +obj+ as nested Arrays.
   #
   # For +true+, +false+ and +nil+ the symbol +:true+, +:false+, +:nil+ is
@@ -129,6 +134,7 @@ class Marshal::Structure
   # Prepares processing of +stream+
 
   def initialize stream
+    @stream    = stream
     @tokenizer = Marshal::Structure::Tokenizer.new stream
   end
 
@@ -141,6 +147,13 @@ class Marshal::Structure
     counter = Marshal::Structure::AllocationCounter.new token_stream
 
     counter.count
+  end
+
+  ##
+  # Loads the stream with Marshal.load
+
+  def load
+    Marshal.load @stream
   end
 
   ##

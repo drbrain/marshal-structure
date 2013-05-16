@@ -17,6 +17,10 @@ class TestMarshalStructure < Marshal::Structure::TestCase
     assert_equal 1, @MS.new("\x04\x08[\x06T").count_allocations
   end
 
+  def test_load
+    assert_equal [true], @MS.new("\x04\x08[\x06T").load
+  end
+
   def test_structure
     assert_equal [:array, 0, 1, :true], @MS.new("\x04\x08[\x06T").structure
   end
