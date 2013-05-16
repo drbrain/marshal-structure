@@ -143,7 +143,7 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
           [:string, 7, "example"],
           [:fixnum, 22]]]]
 
-        assert_equal expected, @MS.load(str)
+    assert_equal expected, @MS.load(str)
   end
 
   def test_construct_module_old

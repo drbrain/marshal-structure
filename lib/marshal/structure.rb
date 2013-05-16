@@ -331,14 +331,11 @@ class Marshal::Structure
     when :bignum then
       obj.concat construct_bignum
     when :class, :module then
-      ref = store_unique_object Object.allocate
-
-      obj.concat [ref, next_token]
+      obj.concat construct_class
     when :data then
       obj.concat construct_data
     when :extended then
-      obj << get_symbol
-      obj << construct
+      obj.concat construct_extended
     when :fixnum then
       obj << next_token
     when :float then
@@ -353,11 +350,8 @@ class Marshal::Structure
     when :link then
       obj << next_token
     when :module_old then
-      ref = store_unique_object Object.allocate
-
       obj[0] = :module
-      obj << ref
-      obj << next_token
+      obj.concat construct_class
     when :object then
       obj.concat construct_object
     when :regexp then
@@ -371,14 +365,13 @@ class Marshal::Structure
     when :symbol_link then
       obj << next_token
     when :user_class then
-      obj << get_symbol
-      obj << construct
+      obj.concat construct_extended
     when :user_defined then
       obj.concat construct_user_defined
     when :user_marshal then
       obj.concat construct_user_marshal
     else
-      raise "bug: unknown token #{token.inspect}"
+      raise Error, "bug: unknown token #{token.inspect}"
     end
   rescue EndOfMarshal
     raise ArgumentError, 'marshal data too short'
@@ -415,12 +408,28 @@ class Marshal::Structure
   end
 
   ##
+  # Creates the body of a +:class+ object
+
+  def construct_class
+    ref = store_unique_object Object.allocate
+
+    [ref, next_token]
+  end
+
+  ##
   # Creates the body of a wrapped C pointer object
 
   def construct_data
     ref = store_unique_object Object.allocate
 
     [ref, get_symbol, construct]
+  end
+
+  ##
+  # Creates the body of an extended object
+
+  def construct_extended
+    [get_symbol, construct]
   end
 
   ##
