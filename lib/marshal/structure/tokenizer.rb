@@ -129,7 +129,7 @@ class Marshal::Structure::Tokenizer
   TYPE_LINK = '@'
 
   TYPE_MAP = Hash.new do |_, type| # :nodoc:
-    raise Error, "unknown type #{type.inspect}"
+    raise Marshal::Structure::Error, "unknown type #{type.inspect}"
   end
 
   TYPE_MAP[TYPE_ARRAY]      = :array
@@ -167,10 +167,58 @@ class Marshal::Structure::Tokenizer
   end
 
   ##
-  # Decodes a stored Fixnum
+  # Consumes one byte from the marshal stream
 
-  def construct_integer
-    c = consume_byte
+  def byte
+    raise Marshal::Structure::EndOfMarshal.new(@consumed, 1) if
+      @consumed >= @byte_array.size
+
+    data = @byte_array[@consumed]
+    @consumed += 1
+
+    data
+  end
+
+  ##
+  # Consumes +count+ bytes from the marshal stream as an Array of bytes
+
+  def byte_array count
+    bytes(count).bytes.to_a
+  end
+
+  ##
+  # Consumes a sequence of bytes from the marshal stream based on the next
+  # integer
+
+  def byte_sequence
+    size = long
+    bytes size
+  end
+
+  ##
+  # Consumes +count+ from the marshal stream
+
+  def bytes count
+    raise Marshal::Structure::EndOfMarshal.new(@consumed, count) if
+      @consumed + count > @stream.size
+
+    data = @stream[@consumed, count]
+    @consumed += count
+    data
+  end
+
+  ##
+  # Consumes one byte from the marshal stream and returns a character
+
+  def character
+    byte.chr
+  end
+
+  ##
+  # Decodes a stored C long
+
+  def long
+    c = byte
 
     return 0 if c == 0
 
@@ -183,7 +231,7 @@ class Marshal::Structure::Tokenizer
       x = 0
 
       c.times do |i|
-        x |= consume_byte << (8 * i)
+        x |= byte << (8 * i)
       end
       
       x
@@ -195,59 +243,11 @@ class Marshal::Structure::Tokenizer
       (-c).times do |i|
         factor = 8 * i
         x &= ~(0xff << factor)
-        x |= consume_byte << factor
+        x |= byte << factor
       end
 
       x
     end
-  end
-
-  ##
-  # Consumes +bytes+ from the marshal stream
-
-  def consume bytes
-    raise Marshal::Structure::EndOfMarshal.new(@consumed, bytes) if
-      @consumed + bytes > @stream.size
-
-    data = @stream[@consumed, bytes]
-    @consumed += bytes
-    data
-  end
-
-  ##
-  # Consumes +count+ bytes from the marshal stream as an Array of bytes
-
-  def consume_bytes count
-    consume(count).bytes.to_a
-  end
-
-  ##
-  # Consumes one byte from the marshal stream
-
-  def consume_byte
-    raise Marshal::Structure::EndOfMarshal.new(@consumed, 1) if
-      @consumed >= @byte_array.size
-
-    data = @byte_array[@consumed]
-    @consumed += 1
-
-    data
-  end
-
-  ##
-  # Consumes one byte from the marshal stream and returns a character
-
-  def consume_character
-    consume_byte.chr
-  end
-
-  ##
-  # Consumes a sequence of bytes from the marshal stream based on the next
-  # integer
-
-  def get_byte_sequence
-    size = construct_integer
-    consume size
   end
 
   ##
@@ -262,13 +262,13 @@ class Marshal::Structure::Tokenizer
     when :any                         then tokenize_any
     when :array                       then tokenize_array
     when :bignum                      then tokenize_bignum
-    when :byte                        then consume_byte
+    when :byte                        then byte
     when :bytes,
          :class, :module, :module_old,
-         :float, :string, :symbol     then get_byte_sequence
+         :float, :string, :symbol     then byte_sequence
     when :data                        then tokenize_data
     when :extended                    then tokenize_extended
-    when :fixnum, :link, :symbol_link then construct_integer
+    when :fixnum, :link, :symbol_link then long
     when :hash, :pairs                then tokenize_pairs
     when :hash_default                then tokenize_hash_default
     when :instance_variables          then tokenize_instance_variables
@@ -280,7 +280,8 @@ class Marshal::Structure::Tokenizer
     when :user_defined                then tokenize_user_defined
     when :user_marshal                then tokenize_user_marshal
     else
-      raise Error, "bug: unknown state #{current_state.inspect}"
+      raise Marshal::Structure::Error,
+            "bug: unknown state #{current_state.inspect}"
     end
   end
 
@@ -298,7 +299,7 @@ class Marshal::Structure::Tokenizer
   end
 
   def tokenize_any # :nodoc:
-    item_type = TYPE_MAP[consume_character]
+    item_type = TYPE_MAP[character]
 
     @state.push item_type unless [:nil, :true, :false].include? item_type
 
@@ -306,7 +307,7 @@ class Marshal::Structure::Tokenizer
   end
 
   def tokenize_array # :nodoc:
-    size = construct_integer
+    size = long
 
     @state.concat Array.new(size, :any)
 
@@ -314,12 +315,12 @@ class Marshal::Structure::Tokenizer
   end
 
   def tokenize_bignum # :nodoc:
-    sign = consume_byte == 45 ? -1 : 1
-    size = construct_integer * 2
+    sign = byte == 45 ? -1 : 1
+    size = long * 2
 
     result = 0
 
-    bytes = consume_bytes size
+    bytes = byte_array size
 
     bytes.each_with_index do |byte, exp|
       result += (byte * 2**(exp*8))
@@ -338,7 +339,7 @@ class Marshal::Structure::Tokenizer
   alias tokenize_extended tokenize_data # :nodoc:
 
   def tokenize_hash_default # :nodoc:
-    size = construct_integer
+    size = long
 
     @state.push :any
     @state.push size * 2 if size > 0
@@ -374,7 +375,7 @@ class Marshal::Structure::Tokenizer
   end
 
   def tokenize_pairs # :nodoc:
-    size = construct_integer
+    size = long
 
     @state.concat Array.new(size * 2, :any)
 
@@ -384,7 +385,7 @@ class Marshal::Structure::Tokenizer
   def tokenize_regexp # :nodoc:
     @state.push :byte
 
-    get_byte_sequence
+    byte_sequence
   end
 
   def tokenize_struct # :nodoc:
@@ -395,9 +396,10 @@ class Marshal::Structure::Tokenizer
   end
 
   def tokenize_sym # :nodoc:
-    item_type = TYPE_MAP[consume_character]
+    item_type = TYPE_MAP[character]
 
-    raise Error, "expected symbol type, got #{item_type.inspect}" unless
+    raise Marshal::Structure::Error,
+          "expected symbol type, got #{item_type.inspect}" unless
       [:symbol, :symbol_link].include? item_type
 
     @state.push item_type
