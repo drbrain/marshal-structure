@@ -6,3 +6,4 @@ Rakefile
 bin/marshal_structure
 lib/marshal/structure.rb
 test/test_marshal_structure.rb
+test/test_marshal_structure_tokenizer.rb
