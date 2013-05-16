@@ -59,6 +59,19 @@ class TestMarshalStructureTokenizer < MiniTest::Unit::TestCase
     assert_equal 1, e.requested
   end
 
+  def test_check_version
+    assert_raises TypeError do
+      @MST.new("\x03\x00").check_version
+    end
+
+    @MST.new("\x04\x07").check_version
+    @MST.new("\x04\x08").check_version
+
+    assert_raises TypeError do
+      @MST.new("\x04\x09").check_version
+    end
+  end
+
   def test_long
     assert_equal           0, @MST.new("\x04\x08\x00").long
 
@@ -105,6 +118,12 @@ class TestMarshalStructureTokenizer < MiniTest::Unit::TestCase
     ms = @MST.new "\x04\x08l-\x07\x00\x00\x00@"
 
     assert_equal [:bignum, -1073741824], ms.tokens.to_a
+  end
+
+  def test_tokens_check_version
+    assert_raises TypeError do
+      @MST.new("\x04\x09").tokens
+    end
   end
 
   def test_tokens_class

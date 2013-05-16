@@ -46,16 +46,6 @@ class Marshal::Structure
   VERSION = '1.1.1'
 
   ##
-  # Supported major Marshal version
-
-  MAJOR_VERSION = 4
-
-  ##
-  # Supported minor Marshal version
-
-  MINOR_VERSION = 8
-
-  ##
   # Objects found in the Marshal stream.  Since objects aren't constructed the
   # actual object won't be present in this list.
 
@@ -95,13 +85,6 @@ class Marshal::Structure
       raise TypeError, "instance of IO needed"
     end
 
-    major = data[0].ord
-    minor = data[1].ord
-
-    if major != MAJOR_VERSION or minor > MINOR_VERSION then
-      raise TypeError, "incompatible marshal file format (can't be read)\n\tformat version #{MAJOR_VERSION}.#{MINOR_VERSION} required; #{major}.#{minor} given"
-    end
-
     new(data).parse
   end
 
@@ -131,7 +114,9 @@ class Marshal::Structure
   end
 
   def parse
-    parser = Marshal::Structure::Parser.new @tokenizer
+    tokens = @tokenizer.tokens
+
+    parser = Marshal::Structure::Parser.new tokens
 
     parser.parse
   end

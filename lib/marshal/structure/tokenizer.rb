@@ -1,6 +1,16 @@
 class Marshal::Structure::Tokenizer
 
   ##
+  # Supported major Marshal version
+
+  MAJOR_VERSION = 4
+
+  ##
+  # Supported minor Marshal version
+
+  MINOR_VERSION = 8
+
+  ##
   # nil type prefix
 
   TYPE_NIL = '0'
@@ -215,6 +225,18 @@ class Marshal::Structure::Tokenizer
   end
 
   ##
+  # Checks if the stream starts with a compatible marshal version
+
+  def check_version
+    major = @stream[0].ord
+    minor = @stream[1].ord
+
+    return if major == MAJOR_VERSION and minor <= MINOR_VERSION
+
+    raise TypeError, "incompatible marshal file format (can't be read)\n\tformat version #{MAJOR_VERSION}.#{MINOR_VERSION} required; #{major}.#{minor} given"
+  end
+
+  ##
   # Decodes a stored C long
 
   def long
@@ -289,6 +311,8 @@ class Marshal::Structure::Tokenizer
   # Returns an Enumerator that will tokenize the Marshal stream.
 
   def tokens
+    check_version
+
     Enumerator.new do |yielder|
       until @state.empty? do
         token = next_token

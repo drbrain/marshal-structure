@@ -153,7 +153,7 @@ class TestMarshalStructureParser < MiniTest::Unit::TestCase
   def parse marshal
     tokenizer = @MS::Tokenizer.new marshal
 
-    parser = @MS::Parser.new tokenizer
+    parser = @MS::Parser.new tokenizer.tokens
 
     parser.parse
   end

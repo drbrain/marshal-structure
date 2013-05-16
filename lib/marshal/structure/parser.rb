@@ -1,7 +1,7 @@
 class Marshal::Structure::Parser
 
-  def initialize tokenizer
-    @tokenizer = tokenizer
+  def initialize tokens
+    @tokens = tokens
 
     @objects = []
     @symbols = []
@@ -32,7 +32,7 @@ class Marshal::Structure::Parser
   # Creates the structure for the remaining stream.
 
   def parse
-    token = @tokenizer.next_token
+    token = @tokens.next
 
     return token if [:nil, :true, :false].include? token
 
@@ -45,7 +45,7 @@ class Marshal::Structure::Parser
       when :class, :module              then parse_class
       when :data                        then parse_data
       when :extended                    then parse_extended
-      when :fixnum, :link, :symbol_link then [@tokenizer.next_token]
+      when :fixnum, :link, :symbol_link then [@tokens.next]
       when :float                       then parse_float
       when :hash                        then parse_hash
       when :hash_default                then parse_hash_def
@@ -79,7 +79,7 @@ class Marshal::Structure::Parser
 
     obj = [ref]
 
-    items = @tokenizer.next_token
+    items = @tokens.next
 
     obj << items
 
@@ -94,7 +94,7 @@ class Marshal::Structure::Parser
   # Creates the body of a +:bignum+ object
 
   def parse_bignum
-    result = @tokenizer.next_token
+    result = @tokens.next
 
     ref = store_unique_object Object.allocate
 
@@ -107,7 +107,7 @@ class Marshal::Structure::Parser
   def parse_class
     ref = store_unique_object Object.allocate
 
-    [ref, @tokenizer.next_token]
+    [ref, @tokens.next]
   end
 
   ##
@@ -130,7 +130,7 @@ class Marshal::Structure::Parser
   # Creates the body of a +:float+ object
 
   def parse_float
-    float = @tokenizer.next_token
+    float = @tokens.next
 
     ref = store_unique_object Object.allocate
 
@@ -145,7 +145,7 @@ class Marshal::Structure::Parser
 
     obj = [ref]
 
-    pairs = @tokenizer.next_token
+    pairs = @tokens.next
     obj << pairs
 
     pairs.times do
@@ -172,7 +172,7 @@ class Marshal::Structure::Parser
   def parse_instance_variables
     instance_variables = []
 
-    pairs = @tokenizer.next_token
+    pairs = @tokens.next
     instance_variables << pairs
 
     pairs.times do
@@ -198,7 +198,7 @@ class Marshal::Structure::Parser
   def parse_regexp
     ref = store_unique_object Object.allocate
 
-    [ref, @tokenizer.next_token, @tokenizer.next_token]
+    [ref, @tokens.next, @tokens.next]
   end
 
   ##
@@ -207,7 +207,7 @@ class Marshal::Structure::Parser
   def parse_string
     ref = store_unique_object Object.allocate
 
-    [ref, @tokenizer.next_token]
+    [ref, @tokens.next]
   end
 
   ##
@@ -218,7 +218,7 @@ class Marshal::Structure::Parser
 
     obj = [obj_ref, get_symbol]
 
-    members = @tokenizer.next_token
+    members = @tokens.next
     obj << members
 
     members.times do
@@ -233,7 +233,7 @@ class Marshal::Structure::Parser
   # Creates a Symbol
 
   def parse_symbol
-    sym = @tokenizer.next_token
+    sym = @tokens.next
 
     ref = store_unique_object sym.to_sym
 
@@ -246,7 +246,7 @@ class Marshal::Structure::Parser
   def parse_user_defined
     name = get_symbol
 
-    data = @tokenizer.next_token
+    data = @tokens.next
 
     ref = store_unique_object Object.allocate
 
@@ -270,13 +270,13 @@ class Marshal::Structure::Parser
   # Constructs a Symbol from the token stream
 
   def get_symbol
-    token = @tokenizer.next_token
+    token = @tokens.next
 
     case token
     when :symbol then
       [:symbol, *parse_symbol]
     when :symbol_link then
-      [:symbol_link, @tokenizer.next_token]
+      [:symbol_link, @tokens.next]
     else
       raise ArgumentError, "expected SYMBOL or SYMLINK, got #{token.inspect}"
     end
