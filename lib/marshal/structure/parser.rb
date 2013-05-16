@@ -5,7 +5,7 @@
 # Marshal can contain references to previous objects.  These references are
 # included in the structure following referenceable items.  For example, a
 # recursive array:
-# 
+#
 #    a = []
 #    a << self
 #
@@ -28,30 +28,15 @@ class Marshal::Structure::Parser
 
   def initialize tokens
     @tokens = tokens
-
-    @objects = []
-    @symbols = []
+    @objects = -1
+    @symbols = -1
   end
 
   ##
-  # Adds +obj+ to the objects list
+  # Creates a new object reference
 
-  def add_object obj
-    return if
-      [NilClass, TrueClass, FalseClass, Symbol, Fixnum].any? { |c| c === obj }
-
-    index = @objects.size
-    @objects << obj
-    index
-  end
-
-  ##
-  # Adds +symbol+ to the symbols list
-
-  def add_symlink symbol
-    index = @symbols.size
-    @symbols << symbol
-    index
+  def object_ref
+    @objects += 1
   end
 
   ##
@@ -64,7 +49,7 @@ class Marshal::Structure::Parser
 
     obj = [token]
 
-    rest = 
+    rest =
       case token
       when :array                       then parse_array
       when :bignum                      then parse_bignum
@@ -101,9 +86,7 @@ class Marshal::Structure::Parser
   # Creates the body of an +:array+ object
 
   def parse_array
-    ref = store_unique_object Object.allocate
-
-    obj = [ref]
+    obj = [object_ref]
 
     items = @tokens.next
 
@@ -122,27 +105,21 @@ class Marshal::Structure::Parser
   def parse_bignum
     result = @tokens.next
 
-    ref = store_unique_object Object.allocate
-
-    [ref, result]
+    [object_ref, result]
   end
 
   ##
   # Creates the body of a +:class+ object
 
   def parse_class
-    ref = store_unique_object Object.allocate
-
-    [ref, @tokens.next]
+    [object_ref, @tokens.next]
   end
 
   ##
   # Creates the body of a wrapped C pointer object
 
   def parse_data
-    ref = store_unique_object Object.allocate
-
-    [ref, get_symbol, parse]
+    [object_ref, get_symbol, parse]
   end
 
   ##
@@ -158,18 +135,14 @@ class Marshal::Structure::Parser
   def parse_float
     float = @tokens.next
 
-    ref = store_unique_object Object.allocate
-
-    [ref, float]
+    [object_ref, float]
   end
 
   ##
   # Creates the body of a +:hash+ object
 
   def parse_hash
-    ref = store_unique_object Object.allocate
-
-    obj = [ref]
+    obj = [object_ref]
 
     pairs = @tokens.next
     obj << pairs
@@ -213,36 +186,28 @@ class Marshal::Structure::Parser
   # Creates an Object
 
   def parse_object
-    ref = store_unique_object Object.allocate
-
-    [ref, get_symbol, parse_instance_variables]
+    [object_ref, get_symbol, parse_instance_variables]
   end
 
   ##
   # Creates a Regexp
 
   def parse_regexp
-    ref = store_unique_object Object.allocate
-
-    [ref, @tokens.next, @tokens.next]
+    [object_ref, @tokens.next, @tokens.next]
   end
 
   ##
   # Creates a String
 
   def parse_string
-    ref = store_unique_object Object.allocate
-
-    [ref, @tokens.next]
+    [object_ref, @tokens.next]
   end
 
   ##
   # Creates a Struct
 
   def parse_struct
-    obj_ref = store_unique_object Object.allocate
-
-    obj = [obj_ref, get_symbol]
+    obj = [object_ref, get_symbol]
 
     members = @tokens.next
     obj << members
@@ -261,9 +226,7 @@ class Marshal::Structure::Parser
   def parse_symbol
     sym = @tokens.next
 
-    ref = store_unique_object sym.to_sym
-
-    [ref, sym]
+    [symbol_ref, sym]
   end
 
   ##
@@ -274,9 +237,7 @@ class Marshal::Structure::Parser
 
     data = @tokens.next
 
-    ref = store_unique_object Object.allocate
-
-    [ref, name, data]
+    [object_ref, name, data]
   end
 
   ##
@@ -285,11 +246,14 @@ class Marshal::Structure::Parser
   def parse_user_marshal
     name = get_symbol
 
-    obj = Object.allocate
+    [object_ref, name, parse]
+  end
 
-    obj_ref = store_unique_object obj
+  ##
+  # Creates a new symbol reference
 
-    [obj_ref, name, parse]
+  def symbol_ref
+    @symbols += 1
   end
 
   ##
@@ -305,17 +269,6 @@ class Marshal::Structure::Parser
       [:symbol_link, @tokens.next]
     else
       raise ArgumentError, "expected SYMBOL or SYMLINK, got #{token.inspect}"
-    end
-  end
-
-  ##
-  # Stores a reference to +obj+
-
-  def store_unique_object obj
-    if Symbol === obj then
-      add_symlink obj
-    else
-      add_object obj
     end
   end
 
