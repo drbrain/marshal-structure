@@ -123,7 +123,7 @@ class Marshal::Structure
 
 end
 
-require 'marshal/structure/object_counter'
+require 'marshal/structure/allocation_counter'
 require 'marshal/structure/parser'
 require 'marshal/structure/tokenizer'
 

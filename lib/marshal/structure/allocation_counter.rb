@@ -1,7 +1,7 @@
 ##
-# Counts objects allocations necessary to load the stream.  The number of
-# allocations may be less as symbols (e.g. for object instance variables) may
-# already exist.
+# Counts allocations necessary to load the stream.  The number of allocations
+# may be less as symbols (e.g. for object instance variables) may already
+# exist.
 #
 # Allocation counts are determined as follows:
 #
@@ -11,13 +11,12 @@
 # * Symbols count as one allocation even if they may already exist.  (Marshal
 #   automatically compresses duplicate mentions of symbols and objects, so
 #   they will only be counted once).
-# * Other objects are counted as one allocation.  (The count for an Array or
-#   Hash is one plus the number of allocations it contains).
+# * Other objects are counted as one allocation.
 
-class Marshal::Structure::ObjectCounter
+class Marshal::Structure::AllocationCounter
 
   ##
-  # Creates a new ObjectCounter for +tokens+
+  # Creates a new AllocationCounter for +tokens+
 
   def initialize tokens
     @tokens = tokens
