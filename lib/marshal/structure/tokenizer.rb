@@ -168,6 +168,9 @@ class Marshal::Structure::Tokenizer
   TYPE_MAP[TYPE_USERDEF]    = :user_defined
   TYPE_MAP[TYPE_USRMARSHAL] = :user_marshal
 
+  ##
+  # Creates a Tokenizer for a Marshal stream in String +stream+.
+
   def initialize stream
     @byte_array = stream.bytes.to_a
     @consumed   = 2

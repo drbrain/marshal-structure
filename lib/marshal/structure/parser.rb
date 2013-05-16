@@ -1,4 +1,30 @@
+##
+# Parses a tokenized Marshal stream into a structure that resembles how the
+# stream would be loaded.
+#
+# Marshal can contain references to previous objects.  These references are
+# included in the structure following referenceable items.  For example, a
+# recursive array:
+# 
+#    a = []
+#    a << self
+#
+# Has the following Marshal stream:
+#
+#   "\x04\x08[\x06@\x00" # @\x00 is a link to the first Object in the stream
+#
+# And has the following Marshal structure:
+#
+#   [:array, 0, 1,
+#     [:link, 0]]
+#
+# The first item after +:array+, the +0+ is the object's stream ID.  The
+# +:link+ references this ID.
+
 class Marshal::Structure::Parser
+
+  ##
+  # Creates a new Parser using a token stream Enumerator +tokens+.
 
   def initialize tokens
     @tokens = tokens

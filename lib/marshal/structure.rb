@@ -1,8 +1,27 @@
 ##
 # Marshal::Structure dumps a nested Array describing the structure of a
-# Marshal stream.
+# Marshal stream.  Marshal format 4.8 (Ruby 1.8 through 2.x) is supported.
 #
-# Marshal format 4.8 is supported.
+# Examples:
+#
+# To dump the structure of a Marshal stream:
+# 
+#   ruby -rpp -rmarshal/structure \
+#     -e 'pp Marshal::Structure.load Marshal.dump "hello"'
+# 
+# Fancier usage:
+# 
+#   require 'pp'
+#   require 'marshal/structure'
+# 
+#   ms = Marshal::Structure.new Marshal.dump %w[hello world]
+# 
+#   # print the stream structure
+#   pp ms.structure
+# 
+#   # show how many allocations are required to load the stream
+#   p ms.count_allocations
+
 
 class Marshal::Structure
 
@@ -85,7 +104,7 @@ class Marshal::Structure
       raise TypeError, "instance of IO needed"
     end
 
-    new(data).parse
+    new(data).structure
   end
 
   ##
@@ -113,12 +132,31 @@ class Marshal::Structure
     @tokenizer = Marshal::Structure::Tokenizer.new stream
   end
 
-  def parse
-    tokens = @tokenizer.tokens
+  ##
+  # Counts allocations required to load the Marshal stream.  See
+  # Marshal::Structure::AllocationsCounter for a description of how counting
+  # is performed.
 
-    parser = Marshal::Structure::Parser.new tokens
+  def count_allocations
+    counter = Marshal::Structure::AllocationCounter.new token_stream
+
+    counter.count
+  end
+
+  ##
+  # Returns the structure of the Marshal stream.
+
+  def structure
+    parser = Marshal::Structure::Parser.new token_stream
 
     parser.parse
+  end
+
+  ##
+  # Returns an Enumerator for the tokens in the Marshal stream.
+
+  def token_stream
+    @tokenizer.tokens
   end
 
 end

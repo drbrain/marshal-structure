@@ -4,6 +4,8 @@ require 'ben_string'
 require 'openssl'
 require 'pp'
 
+# :stopdoc:
+
 class OpenSSL::X509::Name
   alias _dump_data to_a
 
@@ -43,7 +45,17 @@ end
 
 S = Struct.new :f
 
+# :startdoc:
+
+##
+# A TestCase for writing tests for Marshal::Structure and alternative parsers
+# of Marshal streams.
+
 class Marshal::Structure::TestCase < MiniTest::Unit::TestCase
+
+  ##
+  # A Marshal stream with (almost) every type in it.  The notable absence is
+  # of a Data type.
 
   EVERYTHING =
     "\004\b{\006:\006a[\031c\006Bm\006C\"\006d/\006e\000i\006" \
@@ -57,11 +69,21 @@ class Marshal::Structure::TestCase < MiniTest::Unit::TestCase
     "I\"\025string with ivar\006:\v@value\"\017some value" \
     "C:\016BenString\"\000"
 
-  def mu_pp obj
+  ##
+  # Pretty-print minitest diff output
+
+  def mu_pp obj # :nodoc:
     s = ''
     s = PP.pp obj, s
     s.chomp
   end
+
+  ##
+  # Creates the following convenience namespace instance variables:
+  #
+  # @MS:: Marshal::Structure
+  # @MSP:: Marshal::Structure::Tokenizer
+  # @MST:: Marshal::Structure::Parser
 
   def setup
     @MS  = Marshal::Structure

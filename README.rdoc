@@ -1,18 +1,17 @@
 = marshal-structure
 
-* https://github.com/drbrain/marshal-structure
+home :: https://github.com/drbrain/marshal-structure
+rdoc :: http://docs.seattlerb.org/marshal-structure
+bugs :: https://github.com/drbrain/marshal-structure/issues
 
-== DESCRIPTION:
+== Description
 
-Dumps a tree based on the Marshal format.  Supports the Marshal 4.8 format.
+Tools to inspect and analyze Ruby's Marshal serialization format.  Supports
+the Marshal 4.8 format which is emitted by ruby 1.8 through 2.x.
 
-== FEATURES/PROBLEMS:
+== Examples
 
-* Works like Marshal.load
-
-== SYNOPSIS:
-
-From the command line:
+To dump the structure of a Marshal stream:
 
   ruby -rpp -rmarshal/structure \
     -e 'pp Marshal::Structure.load Marshal.dump "hello"'
@@ -24,21 +23,17 @@ Fancier usage:
 
   ms = Marshal::Structure.new Marshal.dump %w[hello world]
 
-  # print the Marshal stream structure
-  pp ms.construct
+  # print the stream structure
+  pp ms.structure
 
-  # print ruby objects in Marshal stream
-  pp ms.objects
+  # show how many allocations are required to load the stream
+  p ms.count_allocations
 
-== REQUIREMENTS:
-
-* Ruby 1.8.7+
-
-== INSTALL:
+== Installation
 
   gem install marshal-structure
 
-== DEVELOPERS:
+== Developers
 
 After checking out the source, run:
 
@@ -47,11 +42,11 @@ After checking out the source, run:
 This task will install any missing dependencies, run the tests/specs,
 and generate the RDoc.
 
-== LICENSE:
+== License
 
 (The MIT License)
 
-Copyright (c) 2011 Eric Hodel
+Copyright (c) Eric Hodel
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
