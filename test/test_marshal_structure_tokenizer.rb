@@ -128,7 +128,6 @@ class TestMarshalStructureTokenizer < Marshal::Structure::TestCase
   end
 
   def test_tokens_extended
-    skip 'todo'
     ms = @MST.new "\x04\be:\x0FEnumerableo:\vObject\x00"
 
     expected = [
