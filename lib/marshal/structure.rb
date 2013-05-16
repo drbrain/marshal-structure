@@ -5,20 +5,20 @@
 # Examples:
 #
 # To dump the structure of a Marshal stream:
-# 
+#
 #   ruby -rpp -rmarshal/structure \
 #     -e 'pp Marshal::Structure.load Marshal.dump "hello"'
-# 
+#
 # Fancier usage:
-# 
+#
 #   require 'pp'
 #   require 'marshal/structure'
-# 
+#
 #   ms = Marshal::Structure.new Marshal.dump %w[hello world]
-# 
+#
 #   # print the stream structure
 #   pp ms.structure
-# 
+#
 #   # show how many allocations are required to load the stream
 #   p ms.count_allocations
 
@@ -38,7 +38,7 @@ class Marshal::Structure
 
     ##
     # Number of bytes of Marshal stream consumed
-    
+
     attr_reader :consumed
 
     ##
