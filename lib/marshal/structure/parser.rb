@@ -63,7 +63,7 @@ class Marshal::Structure::Parser
         obj[0] = :module
         parse_class
       else
-        raise Error, "bug: unknown token #{token.inspect}"
+        raise Marshal::Structure::Error, "bug: unknown token #{token.inspect}"
       end
 
     obj.concat rest

@@ -9,6 +9,8 @@
     excessive objects.
   * Added a Parser which can be used as a model for further examination of
     Marshal streams.
+  * Added an ObjectCounter which counts the number of allocations that will be
+    made when loading the stream.
 
 === 1.1.1 / 2011-10-06
 

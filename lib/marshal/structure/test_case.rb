@@ -45,6 +45,18 @@ S = Struct.new :f
 
 class Marshal::Structure::TestCase < MiniTest::Unit::TestCase
 
+  EVERYTHING =
+    "\004\b{\006:\006a[\031c\006Bm\006C\"\006d/\006e\000i\006" \
+    "f\0322.2999999999999998\000ff" \
+    "l+\n\000\000\000\000\000\000\000\000\001\0000TF}\000i\000" \
+    "S:\006S\006:\006fi\000o:\vObject\000@\017" \
+    "U:\006M\"\021marshal_dump" \
+    "Iu:\006U\n_dump\006" \
+    ":\026@ivar_on_dump_str\"\036value on ivar on dump str" \
+    ";\000e:\006Eo;\b\000" \
+    "I\"\025string with ivar\006:\v@value\"\017some value" \
+    "C:\016BenString\"\000"
+
   def mu_pp obj
     s = ''
     s = PP.pp obj, s
