@@ -70,6 +70,9 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
 
     structure = @MS.load str
 
+    float_data = "2.2999999999999998\x00ff"
+    float_data.force_encoding Encoding::BINARY
+
     expected = [
       :hash,
       0,
@@ -83,8 +86,8 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
         [:string, 4, "d"],
         [:regexp, 5, "e", 0],
         [:fixnum, 1],
-        [:float, 6, "2.2999999999999998\000ff"],
-        [:bignum, 7, 1, 10, 18446744073709551616],
+        [:float, 6, float_data],
+        [:bignum, 7, 18446744073709551616],
         :nil,
         :true,
         :false,
@@ -319,7 +322,7 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
     expected = [
       :array, 2,
         :instance_variables,
-          :string, '',
+            :string, '',
           1,
           :symbol, 'E', :true,
         :link, 1,
@@ -397,7 +400,9 @@ class TestMarshalStructure < MiniTest::Unit::TestCase
   def test_tokens_too_short
     ms = @MS.new "\x04\x08"
 
-    assert_empty ms.tokens.to_a, "tokenizer don't care"
+    assert_raises @MS::EndOfMarshal do
+      ms.tokens.to_a
+    end
   end
 
   def test_tokens_true

@@ -289,7 +289,7 @@ class Marshal::Structure
 
     @byte_array = stream.bytes.to_a
     @consumed   = 2
-    @state      = []
+    @state      = [:any]
     @stream     = stream
     @stream.force_encoding Encoding::BINARY
   end
@@ -319,66 +319,66 @@ class Marshal::Structure
   # Creates the structure for the remaining stream.
 
   def construct
-    type = consume_character
+    token = next_token
 
-    case type
-    when TYPE_NIL then
-      :nil
-    when TYPE_TRUE then
-      :true
-    when TYPE_FALSE then
-      :false
+    return token if [:nil, :true, :false].include? token
 
-    when TYPE_ARRAY then
-      [:array, *construct_array]
-    when TYPE_BIGNUM then
-      [:bignum, *construct_bignum]
-    when TYPE_CLASS then
+    obj = [token]
+
+    case token
+    when :array then
+      obj.concat construct_array
+    when :bignum then
+      obj.concat construct_bignum
+    when :class, :module then
       ref = store_unique_object Object.allocate
 
-      [:class, ref, get_byte_sequence]
-    when TYPE_DATA then
-      [:data, *construct_data]
-    when TYPE_EXTENDED then
-      [:extended, get_symbol, construct]
-    when TYPE_FIXNUM then
-      [:fixnum, construct_integer]
-    when TYPE_FLOAT then
-      [:float, *construct_float]
-    when TYPE_HASH then
-      [:hash, *construct_hash]
-    when TYPE_HASH_DEF then
-      [:hash_default, *construct_hash_def]
-    when TYPE_IVAR then
-      [:instance_variables, construct, *construct_instance_variables]
-    when TYPE_LINK then
-      [:link, construct_integer]
-    when TYPE_MODULE, TYPE_MODULE_OLD then
+      obj.concat [ref, next_token]
+    when :data then
+      obj.concat construct_data
+    when :extended then
+      obj << get_symbol
+      obj << construct
+    when :fixnum then
+      obj << next_token
+    when :float then
+      obj.concat construct_float
+    when :hash then
+      obj.concat construct_hash
+    when :hash_default then
+      obj.concat construct_hash_def
+    when :instance_variables then
+      obj << construct
+      obj.concat construct_instance_variables
+    when :link then
+      obj << next_token
+    when :module_old then
       ref = store_unique_object Object.allocate
 
-      [:module, ref, get_byte_sequence]
-    when TYPE_OBJECT then
-      [:object, *construct_object]
-    when TYPE_REGEXP then
-      [:regexp, *construct_regexp]
-    when TYPE_STRING then
-      [:string, *construct_string]
-    when TYPE_STRUCT then
-      [:struct, *construct_struct]
-    when TYPE_SYMBOL then
-      [:symbol, *construct_symbol]
-    when TYPE_SYMLINK then
-      [:symbol_link, construct_integer]
-    when TYPE_USERDEF then
-      [:user_defined, *construct_user_defined]
-    when TYPE_USRMARSHAL then
-      [:user_marshal, *construct_user_marshal]
-    when TYPE_UCLASS then
-      name = get_symbol
-
-      [:user_class, name, construct]
+      obj[0] = :module
+      obj << ref
+      obj << next_token
+    when :object then
+      obj.concat construct_object
+    when :regexp then
+      obj.concat construct_regexp
+    when :string then
+      obj.concat construct_string
+    when :struct then
+      obj.concat construct_struct
+    when :symbol then
+      obj.concat construct_symbol
+    when :symbol_link then
+      obj << next_token
+    when :user_class then
+      obj << get_symbol
+      obj << construct
+    when :user_defined then
+      obj.concat construct_user_defined
+    when :user_marshal then
+      obj.concat construct_user_marshal
     else
-      raise ArgumentError, "load error, unknown type #{type}"
+      raise "bug: unknown token #{token.inspect}"
     end
   rescue EndOfMarshal
     raise ArgumentError, 'marshal data too short'
@@ -392,7 +392,7 @@ class Marshal::Structure
 
     obj = [ref]
 
-    items = construct_integer
+    items = next_token
 
     obj << items
 
@@ -407,20 +407,11 @@ class Marshal::Structure
   # Creates the body of a +:bignum+ object
 
   def construct_bignum
-    sign = consume_byte == ?- ? -1 : 1
-    size = construct_integer * 2
-
-    result = 0
-
-    data = consume_bytes size
-
-    data.each_with_index do |data, exp|
-      result += (data * 2**(exp*8))
-    end
+    result = next_token
 
     ref = store_unique_object Object.allocate
 
-    [ref, sign, size, result]
+    [ref, result]
   end
 
   ##
@@ -436,7 +427,7 @@ class Marshal::Structure
   # Creates the body of a +:float+ object
 
   def construct_float
-    float = get_byte_sequence
+    float = next_token
 
     ref = store_unique_object Object.allocate
 
@@ -451,7 +442,7 @@ class Marshal::Structure
 
     obj = [ref]
 
-    pairs = construct_integer
+    pairs = next_token
     obj << pairs
 
     pairs.times do
@@ -478,7 +469,7 @@ class Marshal::Structure
   def construct_instance_variables
     instance_variables = []
 
-    pairs = construct_integer
+    pairs = next_token
     instance_variables << pairs
 
     pairs.times do
@@ -540,7 +531,7 @@ class Marshal::Structure
   def construct_regexp
     ref = store_unique_object Object.allocate
 
-    [ref, get_byte_sequence, consume_byte]
+    [ref, next_token, next_token]
   end
 
   ##
@@ -549,7 +540,7 @@ class Marshal::Structure
   def construct_string
     ref = store_unique_object Object.allocate
 
-    [ref, get_byte_sequence]
+    [ref, next_token]
   end
 
   ##
@@ -563,7 +554,7 @@ class Marshal::Structure
 
     obj = [obj_ref, get_symbol]
 
-    members = construct_integer
+    members = next_token
     obj << members
 
     members.times do
@@ -578,7 +569,7 @@ class Marshal::Structure
   # Creates a Symbol
 
   def construct_symbol
-    sym = get_byte_sequence
+    sym = next_token
 
     ref = store_unique_object sym.to_sym
 
@@ -591,7 +582,7 @@ class Marshal::Structure
   def construct_user_defined
     name = get_symbol
 
-    data = get_byte_sequence
+    data = next_token
 
     ref = store_unique_object Object.allocate
 
@@ -662,16 +653,15 @@ class Marshal::Structure
   # Constructs a Symbol from a TYPE_SYMBOL or TYPE_SYMLINK
 
   def get_symbol
-    type = consume_character
+    token = next_token
 
-    case type
-    when TYPE_SYMBOL then
+    case token
+    when :symbol then
       [:symbol, *construct_symbol]
-    when TYPE_SYMLINK then
-      num = construct_integer
-      [:symbol_link, num]
+    when :symbol_link then
+      [:symbol_link, next_token]
     else
-      raise ArgumentError, "expected TYPE_SYMBOL or TYPE_SYMLINK, got #{type.inspect}"
+      raise ArgumentError, "expected SYMBOL or SYMLINK, got #{token.inspect}"
     end
   end
 
@@ -681,7 +671,9 @@ class Marshal::Structure
   # incomplete.
 
   def next_token # :nodoc:
-    case current_state = @state.pop
+    current_state = @state.pop
+
+    case current_state
     when :any                         then tokenize_any
     when :array                       then tokenize_array
     when :bignum                      then tokenize_bignum
@@ -699,14 +691,12 @@ class Marshal::Structure
     when :regexp                      then tokenize_regexp
     when :struct                      then tokenize_struct
     when :sym                         then tokenize_sym
+    when :user_class                  then tokenize_user_class
     when :user_defined                then tokenize_user_defined
     when :user_marshal                then tokenize_user_marshal
-    when Integer                      then tokenize_next_any current_state
     else
       raise Error, "bug: unknown state #{current_state.inspect}"
     end
-  rescue EndOfMarshal
-    nil
   end
 
   ##
@@ -724,8 +714,6 @@ class Marshal::Structure
   # Returns an Enumerator that will tokenize the Marshal stream.
 
   def tokens
-    @state = [:any]
-
     Enumerator.new do |yielder|
       until @state.empty? do
         token = next_token
@@ -746,7 +734,7 @@ class Marshal::Structure
   def tokenize_array # :nodoc:
     size = construct_integer
 
-    @state.push size if size > 0
+    @state.concat Array.new(size, :any)
 
     size
   end
@@ -770,7 +758,7 @@ class Marshal::Structure
     @state.push :any
     @state.push :sym
 
-    nil
+    next_token
   end
 
   alias tokenize_extended tokenize_data # :nodoc:
@@ -788,7 +776,7 @@ class Marshal::Structure
     @state.push :pairs
     @state.push :any
 
-    nil
+    next_token
   end
 
   ##
@@ -801,20 +789,20 @@ class Marshal::Structure
     @state.push next_state if current_state > 0
     @state.push :any
 
-    nil
+    next_token
   end
 
   def tokenize_object # :nodoc:
     @state.push :fixnum
     @state.push :sym
 
-    nil
+    next_token
   end
 
   def tokenize_pairs # :nodoc:
     size = construct_integer
 
-    @state.push size * 2 if size > 0
+    @state.concat Array.new(size * 2, :any)
 
     size
   end
@@ -829,7 +817,7 @@ class Marshal::Structure
     @state.push :pairs
     @state.push :sym
 
-    nil
+    next_token
   end
 
   def tokenize_sym # :nodoc:
@@ -843,11 +831,13 @@ class Marshal::Structure
     item_type
   end
 
+  alias tokenize_user_class tokenize_data # :nodoc:
+
   def tokenize_user_defined # :nodoc:
     @state.push :bytes
     @state.push :sym
 
-    nil
+    next_token
   end
 
   alias tokenize_user_marshal tokenize_data # :nodoc:
