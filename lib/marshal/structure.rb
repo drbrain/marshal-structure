@@ -43,7 +43,7 @@ class Marshal::Structure
   ##
   # Version of Marshal::Structure you are using
 
-  VERSION = '1.1.1'
+  VERSION = '2.0'
 
   ##
   # Objects found in the Marshal stream.  Since objects aren't constructed the
