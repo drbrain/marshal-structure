@@ -65,17 +65,6 @@ class Marshal::Structure
   VERSION = '2.0'
 
   ##
-  # Objects found in the Marshal stream.  Since objects aren't constructed the
-  # actual object won't be present in this list.
-
-  attr_reader :objects
-
-  ##
-  # Symbols found in the Marshal stream
-
-  attr_reader :symbols
-
-  ##
   # The Marshal stream
 
   attr_reader :stream
