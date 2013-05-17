@@ -395,7 +395,7 @@ class Marshal::Structure::Tokenizer
   end
 
   def tokenize_object # :nodoc:
-    @state.push :fixnum
+    @state.push :pairs
     @state.push :sym
 
     next_token

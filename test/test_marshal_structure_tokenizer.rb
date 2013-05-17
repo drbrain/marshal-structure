@@ -209,9 +209,35 @@ class TestMarshalStructureTokenizer < Marshal::Structure::TestCase
   end
 
   def test_tokens_object
-    ms = @MST.new "\x04\bo:\vObject\x00"
+    mst = @MST.new \
+      "\x04\bo:\x16DRb::DRbConnError\a" +
+      ":\tmesgI\"\x16connection closed\x06:\x06ET" +
+      ":\abt[\x06" +
+      "\"\x21whatever.rb:in `some_method'"
 
-    assert_equal [:object, :symbol, 'Object', 0], ms.tokens.to_a
+    expected = [
+      :object,
+      :symbol,
+      'DRb::DRbConnError',
+      2,
+      :symbol,
+      'mesg',
+      :instance_variables,
+      :string,
+      'connection closed',
+      1,
+      :symbol,
+      'E',
+      :true,
+      :symbol,
+      'bt',
+      :array,
+      1,
+      :string,
+      'whatever.rb:in `some_method\'',
+    ]
+
+    assert_equal expected, mst.tokens.to_a
   end
 
   def test_tokens_regexp
