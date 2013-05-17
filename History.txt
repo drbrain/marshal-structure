@@ -1,4 +1,4 @@
-=== 2.0 / ??
+=== 2.0 / 2012-05-16
 
 * API Change
   * Split #construct into a Tokenizer and Parser.  The Structure class is now
@@ -11,6 +11,7 @@
     Marshal streams.
   * Added an ObjectCounter which counts the number of allocations that will be
     made when loading the stream.
+  * Added Marshal::Structure#load which loads the object using Marshal.
 
 === 1.1.1 / 2011-10-06
 
