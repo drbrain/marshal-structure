@@ -51,7 +51,7 @@ S = Struct.new :f
 # A TestCase for writing tests for Marshal::Structure and alternative parsers
 # of Marshal streams.
 
-class Marshal::Structure::TestCase < MiniTest::Unit::TestCase
+class Marshal::Structure::TestCase < Minitest::Test
 
   ##
   # A Marshal stream with (almost) every type in it.  The notable absence is
