@@ -4,3 +4,5 @@
 /doc
 /pkg
 /tmp
+.ruby-version
+Gemfile.lock
