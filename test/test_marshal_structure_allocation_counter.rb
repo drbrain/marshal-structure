@@ -63,7 +63,7 @@ class TestMarshalStructureAllocationCounter < Marshal::Structure::TestCase
   end
 
   def test_count_hash_default
-    count = count_allocations "\x04\x08}\x00i\x06"
+    count = count_allocations "\x04\b}\ai\x06i\aTFi\x02\x94\x01"
 
     assert_equal 1, count
   end

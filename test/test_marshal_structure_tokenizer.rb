@@ -164,9 +164,9 @@ class TestMarshalStructureTokenizer < Marshal::Structure::TestCase
   end
 
   def test_tokens_hash_default
-    ms = @MST.new "\x04\x08}\x00i\x06"
+    ms = @MST.new "\x04\b}\ai\x06i\aTFi\x02\x94\x01"
 
-    assert_equal [:hash_default, 0, :fixnum, 1], ms.tokens.to_a
+    assert_equal [:hash_default, 2, :fixnum, 1, :fixnum, 2, :true, :false, :fixnum, 404], ms.tokens.to_a
   end
 
   def test_tokens_instance_variables

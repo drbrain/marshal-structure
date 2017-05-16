@@ -368,8 +368,7 @@ class Marshal::Structure::Tokenizer
   def tokenize_hash_default # :nodoc:
     size = long
 
-    @state.push :any
-    @state.push size * 2 if size > 0
+    @state.concat Array.new(size * 2 + 1, :any)
 
     size
   end

@@ -60,7 +60,8 @@ class Marshal::Structure::TestCase < MiniTest::Unit::TestCase
   EVERYTHING =
     "\004\b{\006:\006a[\031c\006Bm\006C\"\006d/\006e\000i\006" \
     "f\0322.2999999999999998\000ff" \
-    "l+\n\000\000\000\000\000\000\000\000\001\0000TF}\000i\000" \
+    "l+\n\000\000\000\000\000\000\000\000\001\0000TF" \
+    "}\ai\x06i\aTFi\x02\x94\x01" \
     "S:\006S\006:\006fi\000o:\vObject\000@\017" \
     "U:\006M\"\021marshal_dump" \
     "Iu:\006U\n_dump\006" \

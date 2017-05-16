@@ -1,3 +1,8 @@
+=== 2.1 / 2017-05-16
+
+* Bug fix
+  * Tokenize and parse :default_hash
+
 === 2.0 / ??
 
 * API Change
