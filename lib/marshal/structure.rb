@@ -62,7 +62,7 @@ class Marshal::Structure
   ##
   # Version of Marshal::Structure you are using
 
-  VERSION = '2.0'
+  VERSION = '2.1'
 
   ##
   # The Marshal stream
