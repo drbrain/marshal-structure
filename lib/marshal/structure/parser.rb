@@ -159,9 +159,7 @@ class Marshal::Structure::Parser
   # Creates the body of a +:hash_def+ object
 
   def parse_hash_def
-    ref, hash = parse_hash
-
-    [ref, hash, parse]
+    [*parse_hash, parse]
   end
 
   ##
